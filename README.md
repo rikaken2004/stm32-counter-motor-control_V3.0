@@ -1,6 +1,14 @@
 # STM32 智能计数与电机控制系统
 
 基于 STM32F103C8T6 的工业计数控制项目，是从 51 双 MCU 方案到 STM32 单芯片的工程化升级。
+<img width="1706" height="1279" alt="整体情况" src="https://github.com/user-attachments/assets/1f9d2fa8-1aec-4fb2-aba0-6b3e7ca17a61" />
+<img width="1706" height="1279" alt="整体预览图" src="https://github.com/user-attachments/assets/6f718d48-c66b-4ba7-bd2b-7b798305e75c" />
+<img width="1706" height="1279" alt="背面焊板情况" src="https://github.com/user-attachments/assets/408649e2-4548-4daa-bf89-d05795100da1" />
+演示视频链接https://t.bilibili.com/1211556445441491012?share_source=pc_native
+
+PCB设计3D效果预览以及顶层设计模样
+<img width="856" height="743" alt="屏幕截图 2026-06-08 214237" src="https://github.com/user-attachments/assets/1e7d13c8-cc43-4007-b97a-2b6949304430" />
+<img width="1409" height="949" alt="屏幕截图 2026-06-08 214310" src="https://github.com/user-attachments/assets/d82ea3f6-597e-47e3-b93f-a8984e4c040a" />
 
 ## 功能特性
 
