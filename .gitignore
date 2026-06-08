@@ -1,0 +1,38 @@
+# Keil MDK build outputs
+2-1/Objects/
+2-1/Listings/
+
+*.o
+*.d
+*.crf
+*.map
+*.axf
+*.htm
+*.lnp
+*.hex
+*.bin
+*.dep
+*.lst
+*.iex
+*.sct
+*.scvd
+
+# Keil user/local settings
+*.uvopt
+*.uvoptx
+*.uvguix.*
+
+# J-Link
+JLinkLog.txt
+*.jlink
+
+# Backup/temp files
+*.bak
+*.orig
+*.tmp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STM32 智能计数与电机控制系统</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1923;
+  --bg-card:#162231;
+  --bg-code:#0d1520;
+  --text:#c8d6e5;
+  --text-muted:#8899aa;
+  --accent:#2ed8a3;
+  --accent-dim:#1a7f5c;
+  --border:#1e3044;
+  --tag-done:#1a3d2e;
+  --tag-progress:#2a3a1a;
+  --tag-pending:#2a2230;
+  --text-done:#2ed8a3;
+  --text-progress:#c8d830;
+  --text-pending:#a088c0;
+  --red:#e0556a;
+  --orange:#e0a050;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.7;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* nav */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(15,25,35,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;gap:24px;
+  height:52px;overflow-x:auto;
+}
+nav .logo{font-weight:700;color:var(--accent);white-space:nowrap;font-size:14px}
+nav a.nav-link{color:var(--text-muted);font-size:13px;white-space:nowrap;transition:color .2s}
+nav a.nav-link:hover{color:var(--accent);text-decoration:none}
+
+/* sections */
+section{padding:64px 24px;max-width:960px;margin:0 auto}
+section:nth-child(even){background:rgba(22,34,49,0.3)}
+h1{font-size:2rem;color:#fff;margin-bottom:12px}
+h2{font-size:1.4rem;color:var(--accent);margin-bottom:24px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+h3{font-size:1.1rem;color:#fff;margin:24px 0 12px}
+
+/* hero */
+.hero{padding:80px 24px 64px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}
+.hero .subtitle{color:var(--accent);font-size:1.05rem;margin-bottom:20px}
+.hero .intro{max-width:680px;margin:0 auto;color:var(--text-muted);font-size:.95rem;line-height:1.8}
+
+/* cards */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:20px;
+  transition:border-color .3s;
+}
+.card:hover{border-color:var(--accent-dim)}
+.card .card-icon{font-size:1.6rem;margin-bottom:8px}
+.card h4{color:#fff;font-size:.95rem;margin-bottom:6px}
+.card p{color:var(--text-muted);font-size:.85rem}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--accent);font-weight:600;background:rgba(46,216,163,0.05);white-space:nowrap}
+td{color:var(--text)}
+tr:hover td{background:rgba(46,216,163,0.03)}
+td.mono{font-family:'Cascadia Code','Fira Code','JetBrains Mono',monospace;font-size:.82rem;color:var(--accent)}
+
+/* code block */
+.code-block{
+  background:var(--bg-code);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:20px 24px;
+  font-family:'Cascadia Code','Fira Code','JetBrains Mono',monospace;
+  font-size:.82rem;
+  line-height:1.8;
+  overflow-x:auto;
+  color:#a0c8e0;
+}
+
+/* architecture flow */
+.arch-flow{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  padding:24px 0;
+}
+.arch-box{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 28px;
+  text-align:center;
+  color:#fff;
+  font-size:.9rem;
+}
+.arch-arrow{color:var(--accent);font-size:1.4rem;line-height:1.2}
+.arch-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.arch-box.small{padding:10px 20px;font-size:.82rem;min-width:140px}
+
+/* state machine */
+.states{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;padding:16px 0}
+.state-box{
+  background:var(--bg-card);
+  border:2px solid var(--border);
+  border-radius:10px;
+  padding:18px 24px;
+  text-align:center;
+  min-width:120px;
+  transition:border-color .3s;
+}
+.state-box.name{font-weight:700;font-size:1rem;color:#fff}
+.state-box.desc{color:var(--text-muted);font-size:.78rem;margin-top:4px}
+.state-arrow{color:var(--accent);font-size:1.5rem;font-weight:700}
+.state-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px}
+
+/* tags */
+.tag{display:inline-block;padding:3px 10px;border-radius:4px;font-size:.75rem;font-weight:600}
+.tag-done{background:var(--tag-done);color:var(--text-done)}
+.tag-progress{background:var(--tag-progress);color:var(--text-progress)}
+.tag-pending{background:var(--tag-pending);color:var(--text-pending)}
+
+/* status list */
+.status-list{list-style:none;margin:12px 0}
+.status-list li{padding:8px 0;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.status-list .icon{width:20px;text-align:center}
+
+/* timeline */
+.timeline{position:relative;padding-left:28px;margin:20px 0}
+.timeline::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:20px}
+.timeline-item::before{content:'';position:absolute;left:-25px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+.timeline-item.done::before{background:var(--accent)}
+.timeline-item .tl-date{font-size:.78rem;color:var(--text-muted)}
+.timeline-item .tl-title{color:#fff;font-weight:600}
+.timeline-item .tl-desc{color:var(--text-muted);font-size:.85rem}
+
+/* issue callout */
+.callout{
+  border-left:4px solid var(--orange);
+  background:rgba(224,160,80,0.06);
+  padding:16px 20px;
+  border-radius:0 6px 6px 0;
+  margin:16px 0;
+}
+.callout h4{color:var(--orange);margin-bottom:8px}
+
+/* footer */
+footer{text-align:center;padding:32px;color:var(--text-muted);font-size:.78rem;border-top:1px solid var(--border)}
+
+@media(max-width:640px){
+  h1{font-size:1.5rem}
+  section{padding:40px 16px}
+  .card-grid{grid-template-columns:1fr}
+  .states{flex-direction:column}
+  .state-arrow{transform:rotate(90deg)}
+  nav{gap:14px;padding:0 12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<nav>
+  <span class="logo">STM32-COUNTER</span>
+  <a class="nav-link" href="#hero">首页</a>
+  <a class="nav-link" href="#highlights">亮点</a>
+  <a class="nav-link" href="#architecture">架构</a>
+  <a class="nav-link" href="#state-machine">状态机</a>
+  <a class="nav-link" href="#hardware">硬件</a>
+  <a class="nav-link" href="#pinmap">引脚</a>
+  <a class="nav-link" href="#debug-log">日志</a>
+  <a class="nav-link" href="#issue">干扰</a>
+  <a class="nav-link" href="#pcb">PCB</a>
+  <a class="nav-link" href="#status">状态</a>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero" id="hero">
+  <h1>STM32 智能计数与电机控制系统</h1>
+  <p class="subtitle">51 双 MCU 计数控制项目的 STM32 工程化升级版</p>
+  <p class="intro">
+    本项目基于原 STC89C52 双 MCU 计数控制系统，迁移至 STM32F103C8T6 单 MCU 架构，
+    实现按键目标设定、红外计数、OLED 状态显示、电机 PWM 控制、达标停机、自动重启
+    和 USART3 调试日志。当前正在推进 PCB V1 模块化载板设计。
+  </p>
+</section>
+
+<!-- ========== HIGHLIGHTS ========== -->
+<section id="highlights">
+  <h2>项目亮点</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">&#9881;</div>
+      <h4>51 双 MCU &rarr; STM32 单 MCU</h4>
+      <p>从两片 STC89C52 主从通信架构迁移至一片 STM32F103C8T6，精简硬件、统一软件栈</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9200;</div>
+      <h4>TIM4 1ms 非阻塞状态机</h4>
+      <p>阻塞式 Delay_ms 替换为硬件定时器驱动的事件循环，零忙等，全状态响应</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9777;</div>
+      <h4>PB14 EXTI 红外计数</h4>
+      <p>外部中断下降沿捕获，delta 差值法消除累积误差，app 层 120ms 防抖过滤</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9783;</div>
+      <h4>TIM3 PWM 电机控制</h4>
+      <p>PA6 输出 PWM，PB12/PB13 方向控制，TB6612FNG H 桥驱动，速度可调</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9636;</div>
+      <h4>OLED 实时状态显示</h4>
+      <p>4 行信息：目标值 / 当前计数 / 累计 / 状态&电机，100ms 事件驱动刷新</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9998;</div>
+      <h4>USART3 事件日志</h4>
+      <p>PB10/PB11 调试串口，115200bps，按键/状态转换/计数事件实时输出</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9888;</div>
+      <h4>电机干扰定位</h4>
+      <p>确认电机 EMI 对 PB14 红外信号的干扰路径，制定独立供电 + RC 滤波整改方案</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#9733;</div>
+      <h4>PCB V1 模块化载板</h4>
+      <p>从杜邦线搭棚升级为核心板 + 模块载板，嘉立创 EDA 设计，预留抗干扰措施</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ARCHITECTURE ========== -->
+<section id="architecture">
+  <h2>系统架构</h2>
+  <div class="arch-flow">
+    <div class="arch-row">
+      <div class="arch-box small">&#128268; 红外传感器<br><small style="color:var(--text-muted)">PB14 EXTI</small></div>
+      <div class="arch-box small">&#128273; ADD 按键<br><small style="color:var(--text-muted)">PB1</small></div>
+      <div class="arch-box small">&#128273; CONFIRM 按键<br><small style="color:var(--text-muted)">PC13</small></div>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-box" style="border-color:var(--accent);padding:18px 40px">
+      <strong>STM32F103C8T6</strong><br>
+      <small style="color:var(--text-muted)">TIM4 1ms | IDLE/RUNNING/COOLDOWN 状态机 | IR 120ms 防抖</small>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-row">
+      <div class="arch-box small">&#9636; OLED 显示<br><small style="color:var(--text-muted)">PB8/PB9 I2C</small></div>
+      <div class="arch-box small">&#9998; USART3 日志<br><small style="color:var(--text-muted)">PB10/PB11</small></div>
+      <div class="arch-box small">&#9783; TB6612 电机驱动<br><small style="color:var(--text-muted)">PA6 PWM</small></div>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-box small" style="border-style:dashed">
+      &#9881; 直流电机<br>
+      <small style="color:var(--text-muted)">启停 / 达标自动重启</small>
+    </div>
+  </div>
+</section>
+
+<!-- ========== STATE MACHINE ========== -->
+<section id="state-machine">
+  <h2>状态机</h2>
+  <div class="state-row">
+    <div class="state-box" style="border-color:var(--accent)">
+      <div class="name">IDLE</div>
+      <div class="desc">设置目标值 (0&ndash;99)<br>PB1 加值，PC13 启动</div>
+    </div>
+    <div class="state-arrow">&rarr;</div>
+    <div class="state-box" style="border-color:#4da6ff">
+      <div class="name">RUNNING</div>
+      <div class="desc">电机运行<br>红外计数累加，PA9 闪烁</div>
+    </div>
+    <div class="state-arrow">&rarr;</div>
+    <div class="state-box" style="border-color:var(--orange)">
+      <div class="name">COOLDOWN</div>
+      <div class="desc">达标停机，LED10 亮<br>等待 5 秒后自动重启</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:16px">
+    <span style="color:var(--text-muted);font-size:.85rem">
+      COOLDOWN 5s 后 &rarr; RUNNING（下一轮）&emsp;|&emsp;
+      任意状态 PC13 &rarr; RESET &rarr; IDLE
+    </span>
+  </div>
+</section>
+
+<!-- ========== HARDWARE ========== -->
+<section id="hardware">
+  <h2>硬件模块</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>模块</th><th>型号 / 规格</th><th>连接方式</th><th>作用</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>主控</td><td>STM32F103C8T6 核心板</td><td>2&times;20 排母</td><td>运行全部逻辑</td></tr>
+      <tr><td>显示</td><td>OLED 0.96" I2C</td><td>4Pin (GND/VCC/SCL/SDA)</td><td>目标/计数/累计/状态</td></tr>
+      <tr><td>传感器</td><td>红外对射/反射传感器</td><td>3Pin (VCC/GND/OUT)</td><td>计数脉冲输入</td></tr>
+      <tr><td>电机驱动</td><td>TB6612FNG 模块</td><td>排母插座</td><td>H 桥电机驱动</td></tr>
+      <tr><td>电机</td><td>直流电机</td><td>2P 接线端子</td><td>驱动被测对象</td></tr>
+      <tr><td>按键</td><td>6&times;6mm 轻触开关</td><td>PB1, PC13 (IPU)</td><td>目标加值 / 确认 / 复位</td></tr>
+      <tr><td>LED</td><td>5mm LED + 220&Omega;</td><td>PA9, PA10 (低电平亮)</td><td>计数指示 / 状态指示</td></tr>
+      <tr><td>调试</td><td>USB-TTL (CH340/CP2102)</td><td>4Pin (GND/TX/RX/3.3V)</td><td>USART3 115200 日志</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ========== PINMAP ========== -->
+<section id="pinmap">
+  <h2>引脚分配表</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>STM32 引脚</th><th>信号名</th><th>方向</th><th>连接目标</th><th>配置</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">PB8</td><td>OLED_SCL</td><td>输出</td><td>OLED SCL</td><td>GPIO Out OD (软件 I2C)</td></tr>
+      <tr><td class="mono">PB9</td><td>OLED_SDA</td><td>双向</td><td>OLED SDA</td><td>GPIO Out OD (软件 I2C)</td></tr>
+      <tr><td class="mono">PA6</td><td>MOTOR_PWM</td><td>输出</td><td>TB6612 PWMA</td><td>AF PP (TIM3_CH1)</td></tr>
+      <tr><td class="mono">PB12</td><td>MOTOR_IN1</td><td>输出</td><td>TB6612 AIN1</td><td>GPIO Out PP</td></tr>
+      <tr><td class="mono">PB13</td><td>MOTOR_IN2</td><td>输出</td><td>TB6612 AIN2</td><td>GPIO Out PP</td></tr>
+      <tr><td class="mono">PB14</td><td>IR_SENSOR</td><td>输入</td><td>红外 OUT &rarr; 1k&Omega; &rarr; PB14</td><td>GPIO IPU (EXTI14 &darr;)</td></tr>
+      <tr><td class="mono">PB1</td><td>KEY_ADD</td><td>输入</td><td>ADD 按键 &rarr; GND</td><td>GPIO IPU</td></tr>
+      <tr><td class="mono">PC13</td><td>KEY_CONFIRM</td><td>输入</td><td>CONFIRM 按键 &rarr; GND</td><td>GPIO IPU</td></tr>
+      <tr><td class="mono">PA9</td><td>LED9</td><td>输出</td><td>LED9 + 220&Omega; &rarr; GND</td><td>GPIO Out PP (L=亮)</td></tr>
+      <tr><td class="mono">PA10</td><td>LED10</td><td>输出</td><td>LED10 + 220&Omega; &rarr; GND</td><td>GPIO Out PP (L=亮)</td></tr>
+      <tr><td class="mono">PB10</td><td>USART3_TX</td><td>输出</td><td>USB-TTL RXD</td><td>AF PP</td></tr>
+      <tr><td class="mono">PB11</td><td>USART3_RX</td><td>输入</td><td>USB-TTL TXD (预留)</td><td>IN_FLOATING</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ========== DEBUG LOG ========== -->
+<section id="debug-log">
+  <h2>调试日志示例</h2>
+  <p style="color:var(--text-muted);margin-bottom:12px;font-size:.88rem">
+    USART3 &middot; 115200 8N1 &middot; PB10 TX
+  </p>
+  <div class="code-block">
+STM32 counter system boot
+KEY ADD target=1
+KEY ADD target=2
+KEY ADD target=3
+STATE IDLE-&gt;RUN target=3
+IR raw=1 count=1
+IR raw=1 count=2
+IR raw=1 count=3
+STATE RUN-&gt;COOL total=3
+STATE COOL-&gt;RUN
+IR raw=1 count=1
+RESET to IDLE
+  </div>
+  <p style="color:var(--text-muted);font-size:.8rem;margin-top:8px">
+    &uarr; 启动 &rarr; 加值到 3 &rarr; 启动 &rarr; 计数 1,2,3 &rarr; 达标冷却 &rarr; 5s 后自动重启 &rarr; 计数 1 &rarr; PC13 复位
+  </p>
+</section>
+
+<!-- ========== MOTOR ISSUE ========== -->
+<section id="issue">
+  <h2>已定位问题：电机干扰</h2>
+
+  <div class="callout">
+    <h4>&#9888; 现象</h4>
+    <p style="color:var(--text)">
+      接入电机电源后，PB14 红外输入出现异常大脉冲（<code style="color:var(--orange)">IR raw=25</code>、
+      <code style="color:var(--orange)">IR raw=30</code>），可能导致计数异常或 MCU 复位。<br>
+      <strong>断开电机电源后</strong>，仅保留 STM32、OLED、红外、按键、USB-TTL，红外计数恢复正常（<code style="color:var(--accent)">raw=1</code>）。
+    </p>
+  </div>
+
+  <h3>当前状态</h3>
+  <p style="color:var(--text-muted)">软件状态机、按键、OLED、UART、红外基础计数逻辑 &mdash; 全部验证正常。<br>
+  问题根因已定位为电机供电扰动和 EMI 对 PB14 红外信号线的传导/辐射干扰。App 层已加入 120ms 计数防抖作为软件兜底。</p>
+
+  <h3>后续硬件整改</h3>
+  <div class="card-grid" style="margin-top:12px">
+    <div class="card"><h4>&#9889; 独立供电</h4><p>电机使用独立 5V~6V 电源，不与 STM32 共用</p></div>
+    <div class="card"><h4>&#127760; 共地</h4><p>STM32 GND &harr; 电机驱动 GND &harr; 电机电源 GND</p></div>
+    <div class="card"><h4>&#128268; 电解电容</h4><p>VM/GND 并联 100&mu;F~470&mu;F，吸收电流尖峰</p></div>
+    <div class="card"><h4>&#128268; 陶瓷电容</h4><p>VM/GND 并联 0.1&mu;F；电机两端并联 0.1&mu;F</p></div>
+    <div class="card"><h4>&#128279; RC 滤波</h4><p>红外 OUT &rarr; 1k&Omega; &rarr; PB14 + 100nF 对地</p></div>
+    <div class="card"><h4>&#128207; 信号隔离</h4><p>红外信号线远离电机 PWM/电源走线，PB14 预留 10k&Omega; 上拉</p></div>
+  </div>
+</section>
+
+<!-- ========== PCB PLAN ========== -->
+<section id="pcb">
+  <h2>PCB V1 计划</h2>
+  <p style="color:var(--text-muted);margin-bottom:16px">
+    模块化载板 &mdash; 使用现成核心板和驱动模块，不做 STM32 裸芯片板。
+  </p>
+  <div class="card-grid">
+    <div class="card"><h4>&#10687; 核心板插座</h4><p>2&times;20 排母，STM32F103C8T6 Blue Pill</p></div>
+    <div class="card"><h4>&#9783; TB6612 插座</h4><p>排母接口，PWMA/AIN1/AIN2/STBY</p></div>
+    <div class="card"><h4>&#9636; OLED 接口</h4><p>4Pin 排针，GND/VCC/SCL/SDA</p></div>
+    <div class="card"><h4>&#128268; 红外接口</h4><p>3Pin + RC 滤波焊盘</p></div>
+    <div class="card"><h4>&#128273; 按键 + LED</h4><p>PB1/PC13 + PA9/PA10 板载</p></div>
+    <div class="card"><h4>&#9998; UART 调试口</h4><p>4Pin GND/TX/RX/3.3V</p></div>
+    <div class="card"><h4>&#9889; 电源 + 端子</h4><p>电机电源输入 / 电机输出，2P 螺钉端子</p></div>
+    <div class="card"><h4>&#128268; 抗干扰区</h4><p>电解 + 陶瓷电容预留焊盘，GND 铺铜，测试点</p></div>
+  </div>
+</section>
+
+<!-- ========== STATUS ========== -->
+<section id="status">
+  <h2>项目当前状态</h2>
+
+  <h3>已完成</h3>
+  <ul class="status-list">
+    <li><span class="icon">&#10003;</span> STM32 最小闭环 (App_Init + App_Task)</li>
+    <li><span class="icon">&#10003;</span> OLED 4 行状态显示 (目标/计数/累计/电机)</li>
+    <li><span class="icon">&#10003;</span> 非阻塞按键 (10ms 采样, 3 次消抖, 短/长按)</li>
+    <li><span class="icon">&#10003;</span> PB14 EXTI 红外计数 (delta 差值法 + 120ms 防抖)</li>
+    <li><span class="icon">&#10003;</span> TIM3 PWM 电机控制接口 (PA6, TB6612)</li>
+    <li><span class="icon">&#10003;</span> IDLE / RUNNING / COOLDOWN 状态机</li>
+    <li><span class="icon">&#10003;</span> USART3 boot + 事件日志 (6 类事件)</li>
+    <li><span class="icon">&#10003;</span> 电机干扰问题定位</li>
+    <li><span class="icon">&#10003;</span> PCB V1 设计输入文档 + 封装确认清单</li>
+    <li><span class="icon">&#10003;</span> 中文项目文档 &times;4 (CONTEXT / CHECKLIST / PCB_DESIGN / FOOTPRINT)</li>
+  </ul>
+
+  <h3>进行中</h3>
+  <ul class="status-list">
+    <li><span class="icon" style="color:var(--text-progress)">&#9679;</span> 电机抗干扰硬件整改</li>
+    <li><span class="icon" style="color:var(--text-progress)">&#9679;</span> PCB V1 嘉立创 EDA 原理图 + PCB 设计</li>
+  </ul>
+
+  <h3>待完成</h3>
+  <ul class="status-list">
+    <li><span class="icon" style="color:var(--text-pending)">&#9675;</span> PCB 打样 (嘉立创)</li>
+    <li><span class="icon" style="color:var(--text-pending)">&#9675;</span> 实物焊接 + 抗干扰验证</li>
+    <li><span class="icon" style="color:var(--text-pending)">&#9675;</span> 连续运行稳定性测试 (10&ndash;30 分钟)</li>
+    <li><span class="icon" style="color:var(--text-pending)">&#9675;</span> 实物照片 + 演示视频</li>
+    <li><span class="icon" style="color:var(--text-pending)">&#9675;</span> GitHub README 整理</li>
+  </ul>
+
+  <h3>项目时间线</h3>
+  <div class="timeline">
+    <div class="timeline-item done">
+      <div class="tl-date">Phase 1</div>
+      <div class="tl-title">STM32 最小闭环 &mdash; 软件功能完成</div>
+      <div class="tl-desc">时基 / 按键 / OLED / 红外计数 / PWM / 状态机 / USART3 日志 / IR 防抖</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="tl-date">Phase 2</div>
+      <div class="tl-title">文档化 &mdash; 完成</div>
+      <div class="tl-desc">PROJECT_CONTEXT / COMPLETION_CHECKLIST / PCB_V1_DESIGN_INPUT / FOOTPRINT_CHECKLIST</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-date">Phase 3</div>
+      <div class="tl-title">电机抗干扰整改 &mdash; 进行中</div>
+      <div class="tl-desc">独立供电 / RC 滤波 / 电容并联 / 信号线隔离</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-date">Phase 4</div>
+      <div class="tl-title">PCB V1 设计 + 打样</div>
+      <div class="tl-desc">嘉立创 EDA 原理图 &rarr; PCB 布局 &rarr; 下单</div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-date">Phase 5</div>
+      <div class="tl-title">验证 + 简历交付物</div>
+      <div class="tl-desc">焊接 / 测试 / 拍照 / 视频 / README</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  STM32 智能计数与电机控制系统 &mdash; 51 双 MCU 项目的 STM32 工程化升级版<br>
+  基于 STM32F103C8T6 + STM32 Standard Peripheral Library + Keil MDK
+</footer>
+
+</body>
+</html>
