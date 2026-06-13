@@ -89,4 +89,3 @@ IDLE ──CONFIRM(T>0)──→ COUNTING ──C>=T──→ MOTOR_RUN ──30
 - [bringup_log.md](bringup_log.md) — PCB V1 上电调试记录
 - [debug_notes.md](debug_notes.md) — 调试问题详细记录
 - [test_record.md](test_record.md) — 功能测试记录
-- [interview_summary.md](interview_summary.md) — 面试复习材料
