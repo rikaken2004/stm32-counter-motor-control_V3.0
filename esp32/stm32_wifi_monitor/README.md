@@ -23,7 +23,6 @@ const char *ssid     = "YOUR_SSID";       // 改为你的 WiFi 名
 const char *password = "YOUR_PASSWORD";   // 改为你的 WiFi 密码
 ```
 
-**不要将真实密码提交到 Git！**
 
 ## 接线
 
