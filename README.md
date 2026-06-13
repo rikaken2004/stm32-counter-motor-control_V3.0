@@ -12,6 +12,7 @@ STM32 计数/电机控制系统：Linux 日志采集与 ESP32-S3 无线监控扩
 esp32和linuxi调试画面
 <img width="1543" height="1029" alt="屏幕截图 2026-06-11 011026" src="https://github.com/user-attachments/assets/07fcce28-4190-4f7e-bcff-cc2a7034d4fb" />
 <img width="1802" height="1028" alt="屏幕截图 2026-06-13 235323" src="https://github.com/user-attachments/assets/7ca8dcec-b6e6-4de2-b0fc-6695e9a6c554" />
+<img width="1706" height="1279" alt="15138d4e7b606b98e77207200ec6788a" src="https://github.com/user-attachments/assets/d0d57ab9-a9ac-4782-a53d-18d37ceb399c" />
 
 系统结构
 
