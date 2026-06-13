@@ -1,130 +1,105 @@
-# STM32 智能计数与电机控制系统
+# STM32 计数/电机控制系统：Linux 日志采集与 ESP32-S3 无线监控扩展
 
-基于 STM32F103C8T6 的工业计数控制项目，是从 51 双 MCU 方案到 STM32 单芯片的工程化升级。
-<img width="1706" height="1279" alt="整体情况" src="https://github.com/user-attachments/assets/1f9d2fa8-1aec-4fb2-aba0-6b3e7ca17a61" />
-<img width="1706" height="1279" alt="整体预览图" src="https://github.com/user-attachments/assets/6f718d48-c66b-4ba7-bd2b-7b798305e75c" />
-<img width="1706" height="1279" alt="背面焊板情况" src="https://github.com/user-attachments/assets/408649e2-4548-4daa-bf89-d05795100da1" />
-演示视频链接https://t.bilibili.com/1211556445441491012?share_source=pc_native
+基于 STM32F103 的红外计数与电机控制系统，扩展 Ubuntu Linux 串口日志采集和 ESP32-S3 WiFi Web 监控，实现**本地控制 → 状态记录 → 无线显示 → 网页 RESET 控制**的完整智能硬件原型链路。
 
-PCB设计3D效果预览以及顶层设计模样
-<img width="856" height="743" alt="屏幕截图 2026-06-08 214237" src="https://github.com/user-attachments/assets/1e7d13c8-cc43-4007-b97a-2b6949304430" />
-<img width="1409" height="949" alt="屏幕截图 2026-06-08 214310" src="https://github.com/user-attachments/assets/d82ea3f6-597e-47e3-b93f-a8984e4c040a" />
+## 系统结构
 
-## 功能特性
-
-- **红外脉冲计数**：EXTI 中断 + 差值法 delta 读取 + 应用层消抖
-- **4 状态非阻塞状态机**：IDLE → COUNTING → MOTOR_RUN → DONE
-- **PWM 电机控制**：TB6612FNG 驱动，软启动 ramp，固定时长运行
-- **OLED 实时显示**：目标值 / 当前计数 / 累计值 / 状态 / 电机状态
-- **非阻塞按键**：PB1 设置目标，PC13 短按确认 / 长按复位
-- **LED 指示**：计数闪烁 + 电机运行指示
-- **USART3 调试日志**：状态转换 / IR 计数 / 电机事件 / PB14 电平诊断
-
-## 硬件组成
-
-| 模块 | 型号/说明 | 接口 |
-|------|-----------|------|
-| MCU | STM32F103C8T6 (Blue Pill) | 核心板插座 |
-| 显示 | 0.96" OLED 128x64 I2C | PB8(SCL) / PB9(SDA) |
-| 电机驱动 | TB6612FNG | PA6(PWM) / PB12/PB13(方向) |
-| 红外传感器 | 4Pin 模块 (DO 数字输出) | PB14 (EXTI14) |
-| 按键 ADD | 微动开关 | PB1 (IPU) |
-| 按键 CONFIRM/RESET | 微动开关 | PC13 (IPU) |
-| LED9 (计数) | 5mm LED | PA9 |
-| LED10 (电机指示) | 5mm LED | PA10 |
-| 调试串口 | USART3 115200 8N1 | PB10(TX) / PB11(RX) |
-
-## 软件状态机
-
-```
-    ┌─────────┐  CONFIRM   ┌──────────┐  C>=T   ┌───────────┐  3000ms  ┌────────┐
-    │  IDLE   │ ─────────→ │ COUNTING │ ──────→ │ MOTOR_RUN │ ───────→ │  DONE  │
-    │ 电机OFF │  (T>0)     │ 电机OFF   │         │ 电机ON     │          │ 电机OFF │
-    │ ADD设T  │            │ IR计数     │         │ 软启动     │          │ 等待确认 │
-    └─────────┘            └──────────┘         └───────────┘          └────────┘
-         ▲                      │                      │                    │
-         │                      │ CONFIRM/RESET        │ CONFIRM/RESET      │ CONFIRM/RESET
-         │                      ▼                      ▼                    ▼
-         │                 ┌────────────────────────────────────────────────┘
-         │                 │  停电机, T=0, C=0, → IDLE
-         └─────────────────┘
+```mermaid
+flowchart LR
+    Sensor[红外传感器 / 按键] --> STM32[STM32F103 控制系统]
+    STM32 --> Motor[电机驱动 / OLED]
+    STM32 -- USART3 TX --> ESP32[ESP32-S3 WiFi Web Server]
+    ESP32 -- USART3 RX RESET --> STM32
+    ESP32 --> Web[浏览器状态监控页面]
+    STM32 -- CH340 --> Linux[Ubuntu Python Logger]
 ```
 
-- **IDLE**：设置目标次数 (0~99)，CONFIRM 开始计数
-- **COUNTING**：红外触发 current_count++，电机不转，达到目标 → MOTOR_RUN
-- **MOTOR_RUN**：软启动 (25%→35%)，LED10 亮，3000ms 后自动停止 → DONE
-- **DONE**：本轮完成，CONFIRM/RESET 开始下一轮
+## 已完成功能
 
-任意状态长按 PC13 (>2s) 或短按 CONFIRM → RESET 回 IDLE。
+| 功能 | 说明 |
+|------|------|
+| STM32 本地计数/电机控制 | 4 状态非阻塞状态机 + EXTI IR 计数 + PWM 电机 + 软启动 |
+| PCB V1 设计/打样/调试 | 嘉立创 EDA 模块化载板，已验证核心逻辑链路 |
+| USART3 周期性状态输出 | 每 500ms 输出 `STATE=IDLE,TARGET=3,CURRENT=0,TOTAL=25,MOTOR=OFF` |
+| Ubuntu Linux 串口日志 | CH340 / minicom / Python pyserial 时间戳日志保存 |
+| ESP32-S3 WiFi Web Server | Arduino IDE + ESP32S3 Dev Module + WebServer |
+| ESP32 接收 STM32 数据 | UART1 (GPIO18 RX / GPIO17 TX) 接收并解析 `STATE=` 行 |
+| Web 页面实时显示 | STATE / TARGET / CURRENT / TOTAL / MOTOR + Raw UART Data |
+| 网页 RESET 按钮反向控制 | ESP32 → USART3_RX → STM32 → App_ResetToIdle() |
 
 ## 项目结构
 
 ```
 STM32_COUNTER_PROJECT/
-├── 2-1/                          # Keil MDK 工程
-│   ├── user/                     # 应用层 (app / app_key / app_time / uart_debug)
-│   ├── hardware/                 # 外设驱动 (Motor / PWM / CountSensor / OLED / LED / Key)
-│   ├── library/                  # STM32 标准外设库
-│   ├── start/                    # 启动文件 + CMSIS
-│   └── system/                   # Delay
-├── docs/                         # 项目文档
-├── hardware/PCB_V1/              # PCB 设计文件
-├── media/                        # 照片 & 视频
-├── PROJECT_CONTEXT.md            # 完整开发记录
-└── README.md
+├── 2-1/                              # Keil MDK 工程 (STM32F103)
+│   ├── user/                         # 应用层 (app / app_key / app_time / uart_debug)
+│   ├── hardware/                     # 外设驱动 (Motor / PWM / CountSensor / OLED / LED / Key)
+│   ├── library/                      # STM32 标准外设库
+│   └── start/                        # 启动文件 + CMSIS
+├── esp32/stm32_wifi_monitor/         # ESP32-S3 Arduino 工程
+│   ├── stm32_wifi_monitor.ino
+│   └── README.md
+├── linux/serial_logger/              # Linux Python 日志采集
+│   ├── serial_logger.py
+│   └── README.md
+├── docs/                             # 项目文档
+│   ├── project_evolution.md          # 迭代演变过程
+│   ├── linux_serial_logger.md        # Linux 日志采集文档
+│   ├── esp32_wifi_monitor.md         # ESP32 无线监控文档
+│   ├── debug_journal.md              # 调试问题日志
+│   ├── wiring_reference.md           # 接线参考
+│   ├── interview_prep_full.md        # 面试准备
+│   └── embedded_roadmap.html         # 学习路线网站
+├── hardware/PCB_V1/                  # PCB 设计文件
+└── media/                            # 照片 & 视频
 ```
 
-## PCB V1
+## 文档导航
 
-- **方案**：模块化载板（STM32 核心板 + 各模块通过排针/插座接入）
-- **EDA**：嘉立创 EDA
-- **尺寸**：10cm × 10cm 以内
-- **状态**：已完成打样、焊接、主要功能验证 ✅
-- 详见 [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)
-
-## 当前验证状态
-
-| 功能 | 状态 |
+| 文档 | 内容 |
 |------|------|
-| OLED 显示 | ✅ |
-| ADD 按键 (PB1) | ✅ |
-| CONFIRM/RESET 按键 (PC13) | ✅ |
-| 红外计数 (PB14 EXTI) | ✅ |
-| 状态机 (IDLE→COUNTING→MOTOR_RUN→DONE) | ✅ |
-| 电机 PWM 控制 (软启动) | ✅ |
-| LED 指示 (计数/电机) | ✅ |
-| USART3 调试日志 | ✅ |
-| PCB 逻辑部分验证 | ✅ |
-| 电机全系统联合 (规范供电) | 🔲 待接线端子 |
+| [docs/project_evolution.md](docs/project_evolution.md) | 完整迭代过程：从 STM32 本地控制到双向无线通信 |
+| [docs/linux_serial_logger.md](docs/linux_serial_logger.md) | Ubuntu + CH340 + Python 串口日志采集 |
+| [docs/esp32_wifi_monitor.md](docs/esp32_wifi_monitor.md) | ESP32-S3 WiFi Web Server + RESET 控制 |
+| [docs/debug_journal.md](docs/debug_journal.md) | 8 个真实调试问题的排查过程与收获 |
+| [docs/wiring_reference.md](docs/wiring_reference.md) | 接线表、供电原则、面包板注意事项 |
+| [docs/interview_prep_full.md](docs/interview_prep_full.md) | 面试复习材料（30 个代码追问） |
+| [docs/embedded_roadmap.html](docs/embedded_roadmap.html) | 嵌入式学习路线网站 |
 
-## 调试问题记录摘要
+## 面试讲解重点
 
-| 问题 | 根因 | 解决 |
-|------|------|------|
-| PC13 按键无响应 | PC13 虚焊 | 补焊 |
-| 红外计数无反应 | R2 不当上拉将 PB14 低电平抬至 ~1.6V (VIH/VIL 不确定区) | R2 空焊，保留 R1+C6 |
-| 电机接口焊盘损伤 | 未装接线端子直接焊线 | 等 KF301 到货，第二片 PCB 正式焊接 |
-| TB6612 发热异常 | 供电接线不规范 | 暂停电机测试，等规范供电 |
-
-## 后续改进方向
-
-- **PCB V1.1**：LED 改直插、电机接口丝印加大、IR 输入电路优化 (R1/R2/C6 标注)、测试点更明显
-- **V2 FreeRTOS**：多任务化 (KeyTask / SensorTask / MotorTask / DisplayTask / DebugTask)
-- **V1.5 数码管**：TM1637 / MAX7219 显示扩展
-- **参数持久化**：Flash 保存 target/motor_speed 等配置
-- **编码器反馈**：速度/位置闭环控制
+- 这个项目**不是教程拼接**，而是从原始 STM32 控制系统逐步扩展出来的
+- 重点能力：**状态机设计、串口通信、Linux 基础、Python 日志、ESP32 WiFi、Web Server、双向 UART 通信、硬件联调**
+- 路线是：`本地控制 → 上位机记录 → 无线监控 → 双向控制`
+- 展示了从"会 STM32"到"能做智能硬件原型闭环"的成长路径
 
 ## 开发环境
 
-- **IDE**：Keil MDK v5
-- **库**：STM32F10x Standard Peripheral Library
-- **编译器**：ARMCC (C89 mode)
-- **调试工具**：ST-Link V2, USB-TTL (USART3 115200)
+| 组件 | 工具 |
+|------|------|
+| STM32 | Keil MDK v5 + STM32F10x Standard Peripheral Library |
+| ESP32 | Arduino IDE + ESP32S3 Dev Module + esp32 by Espressif Systems |
+| Linux | Ubuntu + Python3 pyserial + minicom |
+| PCB | 嘉立创 EDA |
 
 ## 快速开始
 
-1. 克隆仓库
-2. 用 Keil MDK 打开 `2-1/project.uvprojx`
-3. 编译下载到 STM32F103C8T6
-4. 串口助手连接 USART3 (PB10/PB11), 115200 8N1
-5. 上电 → OLED 显示 IDLE → ADD 设置目标 → CONFIRM → 遮挡红外 → 电机自动运行
+### STM32
+
+1. Keil MDK 打开 `2-1/project.uvprojx`
+2. 编译下载到 STM32F103C8T6
+3. 串口助手连接 USART3 (115200 8N1)
+
+### ESP32
+
+1. Arduino IDE 打开 `esp32/stm32_wifi_monitor/stm32_wifi_monitor.ino`
+2. 修改 WiFi 名称和密码
+3. 选择 `ESP32S3 Dev Module`，上传
+4. 浏览器访问 ESP32 IP 地址
+
+### Linux
+
+```bash
+cd linux/serial_logger
+python3 serial_logger.py
+```
