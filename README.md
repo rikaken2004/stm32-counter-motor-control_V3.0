@@ -2,6 +2,17 @@ STM32 计数/电机控制系统：Linux 日志采集与 ESP32-S3 无线监控扩
 
 基于 STM32F103 的红外计数与电机控制系统，扩展 Ubuntu Linux 串口日志采集和 ESP32-S3 WiFi Web 监控，实现**本地控制 → 状态记录 → 无线显示 → 网页 RESET 控制**的完整智能硬件原型链路。
 
+系统情况总览
+<img width="856" height="743" alt="屏幕截图 2026-06-08 214237" src="https://github.com/user-attachments/assets/13101b16-3406-409b-abdc-0aa3d45e2ffb" />
+<img width="1409" height="949" alt="屏幕截图 2026-06-08 214310" src="https://github.com/user-attachments/assets/6fdc785e-92ae-4af1-822d-273de4a54a0c" />
+<img width="1706" height="1279" alt="背面焊板情况" src="https://github.com/user-attachments/assets/dd5d2770-09a2-4a09-8070-7776e3df16f7" />
+<img width="1706" height="1279" alt="整体预览图" src="https://github.com/user-attachments/assets/37456b10-2595-4712-99d9-1370ca84aaa9" />
+<img width="1706" height="1279" alt="整体情况" src="https://github.com/user-attachments/assets/a4e4fc7b-37a1-4904-bb56-fdb4e6e19c47" />
+
+esp32和linuxi调试画面
+<img width="1543" height="1029" alt="屏幕截图 2026-06-11 011026" src="https://github.com/user-attachments/assets/07fcce28-4190-4f7e-bcff-cc2a7034d4fb" />
+<img width="1802" height="1028" alt="屏幕截图 2026-06-13 235323" src="https://github.com/user-attachments/assets/7ca8dcec-b6e6-4de2-b0fc-6695e9a6c554" />
+
 系统结构
 
 ```mermaid
