@@ -46,13 +46,9 @@ STM32_COUNTER_PROJECT/
 │   ├── project_evolution.md          # 迭代演变过程
 │   ├── linux_serial_logger.md        # Linux 日志采集文档
 │   ├── esp32_wifi_monitor.md         # ESP32 无线监控文档
-│   ├── debug_journal.md              # 调试问题日志
 │   ├── wiring_reference.md           # 接线参考
-│   ├── interview_prep_full.md        # 面试准备
-│   └── embedded_roadmap.html         # 学习路线网站
-├── hardware/PCB_V1/                  # PCB 设计文件
-└── media/                            # 照片 & 视频
-```
+
+
 
 ## 文档导航
 
@@ -61,17 +57,10 @@ STM32_COUNTER_PROJECT/
 | [docs/project_evolution.md](docs/project_evolution.md) | 完整迭代过程：从 STM32 本地控制到双向无线通信 |
 | [docs/linux_serial_logger.md](docs/linux_serial_logger.md) | Ubuntu + CH340 + Python 串口日志采集 |
 | [docs/esp32_wifi_monitor.md](docs/esp32_wifi_monitor.md) | ESP32-S3 WiFi Web Server + RESET 控制 |
-| [docs/debug_journal.md](docs/debug_journal.md) | 8 个真实调试问题的排查过程与收获 |
+| [docs/debug_journal.md](docs/debug_journal.md) | 8 个调试问题的排查过程 |
 | [docs/wiring_reference.md](docs/wiring_reference.md) | 接线表、供电原则、面包板注意事项 |
-| [docs/interview_prep_full.md](docs/interview_prep_full.md) | 面试复习材料（30 个代码追问） |
-| [docs/embedded_roadmap.html](docs/embedded_roadmap.html) | 嵌入式学习路线网站 |
 
-## 面试讲解重点
 
-- 这个项目**不是教程拼接**，而是从原始 STM32 控制系统逐步扩展出来的
-- 重点能力：**状态机设计、串口通信、Linux 基础、Python 日志、ESP32 WiFi、Web Server、双向 UART 通信、硬件联调**
-- 路线是：`本地控制 → 上位机记录 → 无线监控 → 双向控制`
-- 展示了从"会 STM32"到"能做智能硬件原型闭环"的成长路径
 
 ## 开发环境
 
