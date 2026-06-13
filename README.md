@@ -1,8 +1,8 @@
-# STM32 计数/电机控制系统：Linux 日志采集与 ESP32-S3 无线监控扩展
+STM32 计数/电机控制系统：Linux 日志采集与 ESP32-S3 无线监控扩展
 
 基于 STM32F103 的红外计数与电机控制系统，扩展 Ubuntu Linux 串口日志采集和 ESP32-S3 WiFi Web 监控，实现**本地控制 → 状态记录 → 无线显示 → 网页 RESET 控制**的完整智能硬件原型链路。
 
-## 系统结构
+系统结构
 
 ```mermaid
 flowchart LR
@@ -14,7 +14,7 @@ flowchart LR
     STM32 -- CH340 --> Linux[Ubuntu Python Logger]
 ```
 
-## 已完成功能
+已完成功能
 
 | 功能 | 说明 |
 |------|------|
@@ -27,7 +27,7 @@ flowchart LR
 | Web 页面实时显示 | STATE / TARGET / CURRENT / TOTAL / MOTOR + Raw UART Data |
 | 网页 RESET 按钮反向控制 | ESP32 → USART3_RX → STM32 → App_ResetToIdle() |
 
-## 项目结构
+项目结构
 
 ```
 STM32_COUNTER_PROJECT/
@@ -50,7 +50,7 @@ STM32_COUNTER_PROJECT/
 
 
 
-## 文档导航
+文档导航
 
 | 文档 | 内容 |
 |------|------|
@@ -62,7 +62,7 @@ STM32_COUNTER_PROJECT/
 
 
 
-## 开发环境
+开发环境
 
 | 组件 | 工具 |
 |------|------|
@@ -73,20 +73,20 @@ STM32_COUNTER_PROJECT/
 
 ## 快速开始
 
-### STM32
+STM32
 
 1. Keil MDK 打开 `2-1/project.uvprojx`
 2. 编译下载到 STM32F103C8T6
 3. 串口助手连接 USART3 (115200 8N1)
 
-### ESP32
+ESP32
 
 1. Arduino IDE 打开 `esp32/stm32_wifi_monitor/stm32_wifi_monitor.ino`
 2. 修改 WiFi 名称和密码
 3. 选择 `ESP32S3 Dev Module`，上传
 4. 浏览器访问 ESP32 IP 地址
 
-### Linux
+Linux
 
 ```bash
 cd linux/serial_logger
