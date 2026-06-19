@@ -96,12 +96,4 @@ stm32_log_YYYYMMDD_HHMMSS.txt
 | Ctrl+C 后显示异常 | KeyboardInterrupt | 正常手动停止 | 这是正常行为，不是报错 |
 | 日志文件权限 | Permission denied | 文件属于 root | `sudo chown $USER:$USER stm32_log_*.txt` |
 
-## 项目价值
 
-从本地串口调试升级为 **Linux 上位机日志系统**。体现的能力：
-
-- Linux 基础命令
-- 串口通信概念（/dev/ttyUSB0、CH340、115200 8N1）
-- Python pyserial 编程
-- 时间戳日志采集
-- 虚拟机设备连接
